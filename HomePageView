@@ -1,0 +1,46 @@
+
+import SwiftUI
+
+struct HomePageView: View {
+    @State private var isActive = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black
+                    .ignoresSafeArea()
+
+                VStack(spacing: 40) {
+                    Text("VoiceBridge")
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundColor(.white)
+
+                    NavigationLink(destination: ContentView(), isActive: $isActive) {
+                        Button(action: {
+                            isActive = true
+                        }) {
+                            Text("Tap to Enter")
+                                .font(.title2)
+                                .bold()
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 24)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white, lineWidth: 2)
+                                        .shadow(color: .white.opacity(0.8), radius: 10)
+                                )
+                                .foregroundColor(.white)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .shadow(color: .white.opacity(0.8), radius: 10)
+                    }
+                }
+            }
+        }
+    }
+}
+
+#Preview {
+    HomePageView()
+}
