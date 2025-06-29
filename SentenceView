@@ -1,0 +1,62 @@
+import SwiftUICore
+import SwiftUI
+import AVFAudio
+struct SentenceView: View {
+    let sentence: String
+    let onReset: () -> Void
+
+    @State private var speaking = false
+    let synthesizer = AVSpeechSynthesizer()
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VStack(spacing: 20) {
+                Text("Teacher View")
+                    .font(.title)
+                    .bold()
+                    .foregroundColor(.white)
+
+                Text(sentence)
+                    .font(.title2)
+                    .padding()
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(12)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Button(action: speak) {
+                    Label("Speak Aloud", systemImage: "speaker.wave.2.fill")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white, lineWidth: 2)
+                                .shadow(color: .white.opacity(0.8), radius: 10)
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                Button(action: onReset) {
+                    Text("Start Over")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white, lineWidth: 2)
+                                .shadow(color: .white.opacity(0.8), radius: 10)
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding()
+        }
+    }
+
+    func speak() {
+        let utterance = AVSpeechUtterance(string: sentence)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        synthesizer.speak(utterance)
+    }
+}
