@@ -1,0 +1,92 @@
+import Foundation
+
+struct GPTResponse: Decodable {
+    struct Choice: Decodable {
+        struct Message: Decodable {
+            let content: String
+        }
+        let message: Message
+    }
+    let choices: [Choice]
+}
+
+class GPTService {
+    static let shared = GPTService()
+    private init() {}
+
+    let apiKey = ""
+
+    func ask(prompt: String, completion: @escaping (String) -> Void) {
+        let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                ["role": "user", "content": prompt]
+            ],
+            "temperature": 0.8
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    completion("⚠️ Error: \(error.localizedDescription)")
+                }
+                return
+            }
+
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion("⚠️ No data received.")
+                }
+                return
+            }
+
+            do {
+                let result = try JSONDecoder().decode(GPTResponse.self, from: data)
+                if let reply = result.choices.first?.message.content {
+                    DispatchQueue.main.async {
+                        completion(reply.trimmingCharacters(in: .whitespacesAndNewlines))
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        completion("⚠️ No reply found in response.")
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion("⚠️ Failed to decode response: \(error.localizedDescription)")
+                }
+            }
+        }.resume()
+    }
+
+    func askAsync(prompt: String) async throws -> String {
+        let url = URL(string: "https://api.openai.com/v1/chat/completions")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                ["role": "user", "content": prompt]
+            ],
+            "temperature": 0.8
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        let decoded = try JSONDecoder().decode(GPTResponse.self, from: data)
+        return decoded.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines) ?? "..."
+    }
+}
