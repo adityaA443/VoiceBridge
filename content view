@@ -1,0 +1,132 @@
+//
+//  ContentView.swift
+//  SpeakEase
+//
+//  Created by Aditya A on 6/28/25.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+    @State private var selectedKeywords: [String] = []
+    @State private var generatedSentence: String? = nil
+    @State private var isLoading = false
+
+    let keywords = [
+        ("Bathroom", "bathroom"),
+        ("Water", "water"),
+        ("Help", "help"),
+        ("Please", "please"),
+        ("Yes", "yes"),
+        ("No", "no"),
+        ("Eat", "eat"),
+        ("Drink", "drink"),
+        ("Break", "break"),
+        ("Nurse", "nurse"),
+        ("Stop", "stop"),
+        ("Go", "go"),
+        ("Play", "play"),
+        ("Learn", "learn"),
+        ("Happy", "happy"),
+        ("Sad", "sad"),
+        ("Tired", "tired"),
+        ("Question", "question"),
+        ("Home", "home"),
+        ("Toilet", "toilet"),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                if let sentence = generatedSentence {
+                    SentenceView(sentence: sentence) {
+                        reset()
+                    }
+                } else {
+                    VStack {
+                        Text("Select Words")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding(.top)
+
+                        ScrollView {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 16) {
+                                ForEach(keywords, id: \.0) { (label, imageName) in
+                                    KeywordButtonView(keyword: label, imageName: imageName) {
+                                        selectedKeywords.append(label)
+                                    }
+                                }
+                            }
+                            .padding()
+                        }
+
+                        if !selectedKeywords.isEmpty {
+                            Text("Selected: \(selectedKeywords.joined(separator: ", "))")
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+
+                        Button(action: generateSentence) {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Generate Sentence")
+                                    .bold()
+                                    .padding()
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white, lineWidth: 2)
+                                            .shadow(color: .white.opacity(0.8), radius: 10)
+                                    )
+                                    .foregroundColor(.white)
+                            }
+                        }
+                        .disabled(isLoading || selectedKeywords.isEmpty)
+                        .buttonStyle(PlainButtonStyle())
+                        .padding(.bottom)
+                    }
+                    .navigationTitle("AI Classroom Translator")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbarBackground(Color.black, for: .navigationBar)
+                    .toolbarBackground(.visible, for: .navigationBar)
+                }
+            }
+        }
+    }
+
+    func generateSentence() {
+        isLoading = true
+
+        let prompt = """
+        You are a helpful assistant helping nonverbal students communicate. Turn these keywords into a polite complete sentence in English.
+
+        Keywords: \(selectedKeywords.joined(separator: ", "))
+
+        Example: "Bathroom, Please" -> "May I please go to the bathroom?"
+
+        Output only the sentence.
+        """
+
+        GPTService.shared.ask(prompt: prompt) { sentence in
+            DispatchQueue.main.async {
+                generatedSentence = sentence
+                isLoading = false
+            }
+        }
+    }
+
+    func reset() {
+        selectedKeywords = []
+        generatedSentence = nil
+    }
+}
+
+
+#Preview {
+    ContentView()
+}
