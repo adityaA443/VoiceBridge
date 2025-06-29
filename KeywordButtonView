@@ -1,0 +1,43 @@
+import SwiftUI
+import AVFoundation
+
+struct KeywordButtonView: View {
+    let keyword: String
+    let imageName: String
+    let action: () -> Void
+
+    private static let synthesizer = AVSpeechSynthesizer()
+
+    var body: some View {
+        Button(action: {
+            speak(keyword)
+            action()
+        }) {
+            VStack {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 64, height: 64)
+                    .colorMultiply(.white) // Make image white-tinted if it supports
+                Text(keyword)
+                    .font(.footnote)
+                    .foregroundColor(.white)
+            }
+            .padding()
+            .background(Color.black)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white, lineWidth: 2)
+                    .shadow(color: .white.opacity(0.8), radius: 10)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    private func speak(_ text: String) {
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.5
+        Self.synthesizer.speak(utterance)
+    }
+}
